@@ -4,8 +4,12 @@ import path from 'path';
 import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
+  // 自動適配：在 Vercel 部署時使用根路徑 '/'，在 GitHub Pages 部署時使用 '/SmartFridge/'
+  const isVercel = process.env.VERCEL === '1' || process.env.VERCEL === 'true';
+  const base = process.env.VITE_BASE_PATH ?? (isVercel ? '/' : '/SmartFridge/');
+
   return {
-    base: '/SmartFridge/',
+    base,
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
