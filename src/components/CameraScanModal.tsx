@@ -109,7 +109,8 @@ export const CameraScanModal: React.FC<CameraScanModalProps> = ({
     setErrorMessage(null);
 
     try {
-      const res = await fetch('/api/identify-ingredients', {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
+      const res = await fetch(`${API_BASE}/api/identify-ingredients`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

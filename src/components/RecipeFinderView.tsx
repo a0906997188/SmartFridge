@@ -137,7 +137,8 @@ export const RecipeFinderView: React.FC<RecipeFinderViewProps> = ({
     onUpdatePreferences(updatedPrefs);
 
     try {
-      const res = await fetch('/api/generate-recipes', {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
+      const res = await fetch(`${API_BASE}/api/generate-recipes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -230,7 +231,8 @@ export const RecipeFinderView: React.FC<RecipeFinderViewProps> = ({
     const keptList = Object.keys(mustKeepIngredients).filter((k) => mustKeepIngredients[k]);
 
     try {
-      const res = await fetch('/api/swap-recipe', {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
+      const res = await fetch(`${API_BASE}/api/swap-recipe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
