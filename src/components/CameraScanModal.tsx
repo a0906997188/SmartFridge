@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Camera, Upload, X, Check, RefreshCw, AlertTriangle, Sparkles, Plus, Image as ImageIcon, ChevronRight, Info } from 'lucide-react';
 import { Ingredient } from '../types/fridge';
+import { postApi } from '../lib/api';
 import { DEMO_FRIDGE_IMAGE, getFoodEmoji, getLocationLabel } from '../data/initialData';
 
 interface CameraScanModalProps {
@@ -109,17 +110,10 @@ export const CameraScanModal: React.FC<CameraScanModalProps> = ({
     setErrorMessage(null);
 
     try {
-      const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
-      const res = await fetch(`${API_BASE}/api/identify-ingredients`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          imageBase64: dataUrl,
-          mimeType: dataUrl.startsWith('data:image/png') ? 'image/png' : 'image/jpeg',
-        }),
+      const data = await postApi('/api/identify-ingredients', {
+        imageBase64: dataUrl,
+        mimeType: dataUrl.startsWith('data:image/png') ? 'image/png' : 'image/jpeg',
       });
-
-      const data = await res.json();
 
       // Check if fallback source
       if (data.source === 'fallback') {

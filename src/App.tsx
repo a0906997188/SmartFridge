@@ -15,6 +15,7 @@ import {
   Recipe,
 } from './types/fridge';
 import { INITIAL_INGREDIENTS, INITIAL_PREFERENCES } from './data/initialData';
+import { withExpiry } from './lib/expiry';
 import { RotateCcw, CheckCircle, X } from 'lucide-react';
 
 export default function App() {
@@ -22,9 +23,10 @@ export default function App() {
   const [ingredients, setIngredients] = useState<Ingredient[]>(() => {
     try {
       const saved = localStorage.getItem('fc_ingredients');
-      return saved ? JSON.parse(saved) : INITIAL_INGREDIENTS;
+      const list: Ingredient[] = saved ? JSON.parse(saved) : INITIAL_INGREDIENTS;
+      return list.map(withExpiry);
     } catch {
-      return INITIAL_INGREDIENTS;
+      return INITIAL_INGREDIENTS.map(withExpiry);
     }
   });
 
@@ -125,7 +127,8 @@ export default function App() {
     );
   };
 
-  const handleSaveIngredient = (saved: Ingredient) => {
+  const handleSaveIngredient = (input: Ingredient) => {
+    const saved = withExpiry(input);
     setIngredients((prev) => {
       const idx = prev.findIndex((i) => i.id === saved.id);
       if (idx >= 0) {
@@ -145,7 +148,7 @@ export default function App() {
 
   const handleScanConfirm = (scannedItems: Ingredient[]) => {
     // Append scanned items
-    setIngredients((prev) => [...scannedItems, ...prev]);
+    setIngredients((prev) => [...scannedItems.map(withExpiry), ...prev]);
     setIsScanModalOpen(false);
     setCurrentTab('fridge');
     showToast(`成功盤點加入 ${scannedItems.length} 項食材！`);
@@ -220,7 +223,7 @@ export default function App() {
   };
 
   const handleResetData = () => {
-    setIngredients(INITIAL_INGREDIENTS);
+    setIngredients(INITIAL_INGREDIENTS.map(withExpiry));
     setPreferences(INITIAL_PREFERENCES);
     setCookingLogs([]);
     showToast('已還原為預設示範食材');
@@ -260,6 +263,7 @@ export default function App() {
               }}
               onBatchConfirmPending={handleBatchConfirmPending}
               onUpdateQuantity={handleUpdateQuantity}
+              onCookExpiring={() => setCurrentTab('recipes')}
             />
           )}
 

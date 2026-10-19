@@ -32,6 +32,8 @@ import {
   RecipeStep,
 } from '../types/fridge';
 import { getFoodEmoji } from '../data/initialData';
+import { postApi } from '../lib/api';
+import { getDaysLeft } from '../lib/expiry';
 
 interface RecipeFinderViewProps {
   ingredients: Ingredient[];
@@ -137,21 +139,15 @@ export const RecipeFinderView: React.FC<RecipeFinderViewProps> = ({
     onUpdatePreferences(updatedPrefs);
 
     try {
-      const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
-      const res = await fetch(`${API_BASE}/api/generate-recipes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ingredients: validOkIngredients, // Task 3.6: only 'ok'
-          equipments: selectedEquipments,
-          dietaryStyle,
-          quickTimeOnly,
-          excludedIngredients: excludedList,
-          servings,
-        }),
+      const data = await postApi('/api/generate-recipes', {
+        // Task 3.6: only 'ok'; daysLeft lets the AI prioritise items about to expire
+        ingredients: validOkIngredients.map((i) => ({ ...i, daysLeft: getDaysLeft(i) })),
+        equipments: selectedEquipments,
+        dietaryStyle,
+        quickTimeOnly,
+        excludedIngredients: excludedList,
+        servings,
       });
-
-      const data = await res.json();
       if (data.source === 'fallback') {
         setIsFallbackSource(true);
       } else {
@@ -231,23 +227,16 @@ export const RecipeFinderView: React.FC<RecipeFinderViewProps> = ({
     const keptList = Object.keys(mustKeepIngredients).filter((k) => mustKeepIngredients[k]);
 
     try {
-      const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
-      const res = await fetch(`${API_BASE}/api/swap-recipe`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          originalRecipe: current,
-          mustKeepIngredients: keptList,
-          swapReason: chosenReason,
-          equipments: selectedEquipments,
-          dietaryStyle,
-          quickTimeOnly,
-          excludedIngredients: excludedList,
-          allFridgeIngredients: validOkIngredients,
-        }),
+      const data = await postApi('/api/swap-recipe', {
+        originalRecipe: current,
+        mustKeepIngredients: keptList,
+        swapReason: chosenReason,
+        equipments: selectedEquipments,
+        dietaryStyle,
+        quickTimeOnly,
+        excludedIngredients: excludedList,
+        allFridgeIngredients: validOkIngredients,
       });
-
-      const data = await res.json();
       if (data.error || !data.recipe) {
         setSwapErrorMessage(data.message || '換菜失敗，請重試。');
         return;

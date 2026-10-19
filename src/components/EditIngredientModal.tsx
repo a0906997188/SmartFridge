@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check, Trash2, Sparkles, MapPin, Tag } from 'lucide-react';
 import { Ingredient, IngredientLocation, IngredientStatus, IngredientCategory } from '../types/fridge';
+import { expiryDateFromDays, getDaysLeft } from '../lib/expiry';
 import { getFoodEmoji, getLocationLabel } from '../data/initialData';
 
 interface EditIngredientModalProps {
@@ -35,7 +36,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
       setCategory(ingredient.category || 'veg');
       setLocation(ingredient.location || 'shelf_mid');
       setStatus(ingredient.status || 'ok');
-      setExpiryDays(ingredient.expiryDays || 7);
+      setExpiryDays(Math.max(0, getDaysLeft(ingredient)));
       setFreshnessTip(ingredient.freshnessTip || '');
     } else {
       setName('');
@@ -66,7 +67,8 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
       confidence: ingredient?.confidence || 1.0,
       bbox: ingredient?.bbox,
       freshnessTip: freshnessTip.trim() || undefined,
-      expiryDays: Number(expiryDays) || 7,
+      expiryDays: Number(expiryDays),
+      expiresAt: expiryDateFromDays(Number(expiryDays)),
       addedAt: ingredient?.addedAt || '剛剛',
       source: ingredient?.source || 'manual',
     };
@@ -295,10 +297,10 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
               <div className="flex items-center gap-2">
                 <input
                   type="number"
-                  min="1"
-                  max="90"
+                  min="0"
+                  max="365"
                   value={expiryDays}
-                  onChange={(e) => setExpiryDays(parseInt(e.target.value) || 1)}
+                  onChange={(e) => setExpiryDays(Math.max(0, parseInt(e.target.value) || 0))}
                   className="w-full px-4 py-2.5 border-2 border-[#DCE4E0] rounded-xl focus:border-[#2E9E6A] focus:outline-none text-base font-semibold"
                 />
                 <span className="text-sm text-gray-600 shrink-0">天</span>

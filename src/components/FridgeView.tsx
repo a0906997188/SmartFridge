@@ -2,6 +2,21 @@ import React, { useState } from 'react';
 import { Camera, Plus, CheckCircle2, AlertCircle, LayoutGrid, ListFilter, Sparkles, AlertTriangle, ChevronRight, Layers } from 'lucide-react';
 import { Ingredient, IngredientLocation } from '../types/fridge';
 import { getFoodEmoji, getLocationLabel } from '../data/initialData';
+import { getDaysLeft, getExpiryLabel, isExpiringSoon } from '../lib/expiry';
+
+const ExpiryBadge: React.FC<{ item: Ingredient }> = ({ item }) => {
+  if (!isExpiringSoon(item)) return null;
+  const expired = getDaysLeft(item) < 0;
+  return (
+    <span
+      className={`text-xs font-bold px-2 py-0.5 rounded-full ml-0.5 whitespace-nowrap ${
+        expired ? 'bg-red-600 text-white' : 'bg-red-100 text-red-600'
+      }`}
+    >
+      {getExpiryLabel(item)}
+    </span>
+  );
+};
 
 interface FridgeViewProps {
   ingredients: Ingredient[];
@@ -10,6 +25,7 @@ interface FridgeViewProps {
   onEditIngredient: (item: Ingredient) => void;
   onBatchConfirmPending: () => void;
   onUpdateQuantity: (id: string, delta: number) => void;
+  onCookExpiring: () => void;
 }
 
 export const FridgeView: React.FC<FridgeViewProps> = ({
@@ -19,6 +35,7 @@ export const FridgeView: React.FC<FridgeViewProps> = ({
   onEditIngredient,
   onBatchConfirmPending,
   onUpdateQuantity,
+  onCookExpiring,
 }) => {
   // Task 5: Toggle between Scheme B (Visual Fridge) and Scheme A (Clean List) - both strictly preserved
   const [viewStyle, setViewStyle] = useState<'visual' | 'list'>('visual');
@@ -28,6 +45,9 @@ export const FridgeView: React.FC<FridgeViewProps> = ({
   const activeIngredients = ingredients.filter((i) => i.status !== 'depleted');
   const pendingIngredients = ingredients.filter((i) => i.status === 'wait');
   const depletedIngredients = ingredients.filter((i) => i.status === 'depleted');
+  const expiringIngredients = ingredients
+    .filter(isExpiringSoon)
+    .sort((a, b) => getDaysLeft(a) - getDaysLeft(b));
 
   // Filtered for list view
   const filteredList = ingredients.filter((item) => {
@@ -119,6 +139,40 @@ export const FridgeView: React.FC<FridgeViewProps> = ({
         </div>
       )}
 
+      {/* Expiring Soon Alert Banner */}
+      {expiringIngredients.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-start gap-3 min-w-0">
+            <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <h4 className="text-base font-bold text-red-800">
+                有 {expiringIngredients.length} 項食材即將過期
+              </h4>
+              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                {expiringIngredients.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => onEditIngredient(item)}
+                    className="inline-flex items-center gap-1 text-sm bg-white border border-red-200 text-red-800 px-2.5 py-1 rounded-full cursor-pointer hover:bg-red-100"
+                  >
+                    <span>{getFoodEmoji(item.name, item.category)}</span>
+                    <span className="font-semibold">{item.name}</span>
+                    <span className="text-xs text-red-600">{getExpiryLabel(item)}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={onCookExpiring}
+            className="w-full sm:w-auto px-4 py-2 min-h-[44px] bg-red-600 text-white text-sm font-bold rounded-xl shadow-xs hover:bg-red-700 cursor-pointer whitespace-nowrap transition-colors flex items-center justify-center gap-1.5"
+          >
+            <Sparkles className="w-4 h-4" />
+            優先料理這些食材
+          </button>
+        </div>
+      )}
+
       {/* Primary Action Buttons (Thumb-friendly >=44px) */}
       <div className="flex items-stretch gap-3">
         <button
@@ -196,11 +250,7 @@ export const FridgeView: React.FC<FridgeViewProps> = ({
                                 待確認
                               </span>
                             )}
-                            {item.expiryDays && item.expiryDays <= 3 && (
-                              <span className="text-xs font-bold bg-red-100 text-red-600 px-2 py-0.5 rounded-full ml-0.5">
-                                {item.expiryDays}天內過期
-                              </span>
-                            )}
+                            <ExpiryBadge item={item} />
                           </div>
                         );
                       })}
@@ -298,6 +348,7 @@ export const FridgeView: React.FC<FridgeViewProps> = ({
                           <span className="text-base font-semibold text-[#555]">
                             {item.quantity} {item.unit}
                           </span>
+                          {!isDepleted && <ExpiryBadge item={item} />}
                         </div>
                         <div className="flex items-center gap-1.5 mt-0.5 text-sm text-[#777]">
                           <span>{getLocationLabel(item.location)}</span>

@@ -29,7 +29,8 @@ export interface Ingredient {
   confidence?: number;
   bbox?: [number, number, number, number]; // [ymin, xmin, ymax, xmax] 0-1000
   freshnessTip?: string;
-  expiryDays?: number; // 預估還能放幾天
+  expiryDays?: number; // 建立時預估還能放幾天
+  expiresAt?: string; // 到期日 (ISO)，由 expiryDays 換算，每天自動倒數
   addedAt: string;
   source: 'photo' | 'manual';
 }
