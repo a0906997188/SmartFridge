@@ -151,6 +151,8 @@ app.post('/api/identify-ingredients', async (req: Request, res: Response) => {
     // Attempt Gemini call with retry
     let parsed: any = null;
     let attempts = 0;
+    // Last failure reason, returned to the client so failures can be diagnosed without server logs
+    let lastError = '';
     while (attempts < 2 && !parsed) {
       attempts++;
       try {
@@ -199,12 +201,14 @@ app.post('/api/identify-ingredients', async (req: Request, res: Response) => {
         if (!Array.isArray(parsed)) parsed = null;
       } catch (e) {
         console.warn(`Identify ingredients attempt ${attempts} failed:`, e);
+        lastError = e instanceof Error ? e.message : String(e);
       }
     }
 
     if (!parsed) {
       return res.status(500).json({
         error: true,
+        fallbackReason: lastError,
         message: 'AI 辨識結構解析失敗，請重新拍攝或重試。',
       });
     }
@@ -306,6 +310,8 @@ ${extraGuidance}
     // Attempt Gemini call with programmatic verification and 1 retry
     let verifiedRecipes: any[] = [];
     let attempts = 0;
+    // Last failure reason, returned to the client so failures can be diagnosed without server logs
+    let lastError = '';
     let retryGuidance = '';
 
     while (attempts < 2 && verifiedRecipes.length === 0) {
@@ -401,11 +407,13 @@ ${extraGuidance}
           if (compliantList.length > 0) {
             verifiedRecipes = compliantList;
           } else {
+            lastError = `recipes violated constraints: ${violations.join('; ')}`;
             retryGuidance = `\n上一輪生成的食譜違反了以下規則，請務必改正重新生成：\n${violations.join('\n')}`;
           }
         }
       } catch (err) {
         console.warn(`Generate recipes attempt ${attempts} failed:`, err);
+        lastError = err instanceof Error ? err.message : String(err);
       }
     }
 
@@ -416,6 +424,7 @@ ${extraGuidance}
         error: false,
         message: '為確保 100% 符合您的廚房設備與飲食限制，已切換為安全備援食譜。',
         source: 'fallback',
+        fallbackReason: lastError,
         recipes: fallbackList,
       });
     }
@@ -511,6 +520,8 @@ ${extraMsg}
 
     let finalRecipe: any = null;
     let attempts = 0;
+    // Last failure reason, returned to the client so failures can be diagnosed without server logs
+    let lastError = '';
     let retryMsg = '';
 
     while (attempts < 2 && !finalRecipe) {
@@ -602,10 +613,12 @@ ${extraMsg}
           if (missingKept.length > 0) {
             reasons.push(`未包含使用者指定必留的食材：${missingKept.join('、')}`);
           }
+          lastError = `swap violated constraints: ${reasons.join('; ')}`;
           retryMsg = `\n上一輪生成的換菜食譜有以下問題，請修正並重新輸出：\n${reasons.join('\n')}`;
         }
       } catch (err) {
         console.warn(`Swap recipe attempt ${attempts} failed:`, err);
+        lastError = err instanceof Error ? err.message : String(err);
       }
     }
 
@@ -622,6 +635,7 @@ ${extraMsg}
         error: false,
         message: '為確保完全保留必留食材並避開限制，已啟用備援換菜食譜。',
         source: 'fallback',
+        fallbackReason: lastError,
         recipe: finalRecipe,
       });
     }
