@@ -1,9 +1,8 @@
 import express, { Request, Response } from 'express';
-import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import dotenv from 'dotenv';
 import { GoogleGenAI, Type } from '@google/genai';
-import { getFallbackDetectionResult, getFallbackRecipes, getFallbackSwappedRecipe } from './src/lib/fallback';
+import { getFallbackDetectionResult, getFallbackRecipes, getFallbackSwappedRecipe } from './src/lib/fallback.js';
 
 dotenv.config();
 
@@ -645,11 +644,13 @@ ${extraMsg}
 // Fullstack Express + Vite integration
 async function startServer() {
   if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.resolve(__dirname, 'dist')));
+    app.use(express.static(path.resolve(import.meta.dirname, 'dist')));
     app.get('*', (req: Request, res: Response) => {
-      res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
+      res.sendFile(path.resolve(import.meta.dirname, 'dist', 'index.html'));
     });
   } else {
+    // Loaded lazily so the Vercel serverless function never pulls in Vite
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
