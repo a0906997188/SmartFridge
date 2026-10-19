@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --g: #2E9E6A;
+    --bg: #FAF8F3;
+    --tx: #2B2B2B;
+    --or: #E8833A;
+    --card: #FFFFFF;
+  }
+
+  body {
+    font-family: 'Noto Sans TC', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--bg);
+    color: var(--tx);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    touch-action: manipulation;
+  }
+
+  /* Safe area padding for mobile notches / home bars */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+}
+
+/* Custom scrollbar styling for recipe & food items */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cfd8d3;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a4b3aa;
+}

@@ -1,0 +1,6 @@
+{
+  "name": "FridgeChef 冰箱食材盤點與智慧料理",
+  "description": "拍照一鍵盤點冰箱食材、客製化設備與飲食風格推薦食譜，煮完自動扣庫存。",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
